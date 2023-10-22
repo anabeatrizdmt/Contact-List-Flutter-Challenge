@@ -5,6 +5,7 @@ import 'package:contact_list_app/repository/contact_back4app_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gallery_saver/gallery_saver.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart' as path_provider;
 import 'package:path/path.dart';
@@ -44,6 +45,37 @@ class _ContactPageState extends State<ContactPage> {
     phoneController.dispose();
     emailController.dispose();
     super.dispose();
+  }
+
+
+  _cropImage(XFile imageFile) async {
+    CroppedFile? croppedFile = await ImageCropper().cropImage(
+      sourcePath: imageFile.path,
+      aspectRatioPresets: [
+        CropAspectRatioPreset.square,
+        CropAspectRatioPreset.ratio3x2,
+        CropAspectRatioPreset.original,
+        CropAspectRatioPreset.ratio4x3,
+        CropAspectRatioPreset.ratio16x9
+      ],
+      uiSettings: [
+        AndroidUiSettings(
+            toolbarTitle: 'Cropper',
+            toolbarColor: Colors.deepOrange,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.original,
+            lockAspectRatio: false),
+        IOSUiSettings(
+          title: 'Cropper',
+        ),
+      ],
+    );
+    if (croppedFile != null) {
+      await GallerySaver.saveImage(croppedFile.path);
+      photo = XFile(croppedFile.path);
+      setState(() {});
+      photoPath = croppedFile.path;
+    }
   }
 
   @override
@@ -92,8 +124,7 @@ class _ContactPageState extends State<ContactPage> {
                     String name = basename(photo!.path);
                     await photo!.saveTo("$path/$name");
                     photoPath = photo!.path;
-                    await GallerySaver.saveImage(photo!.path);
-                    setState(() {});
+                    _cropImage(photo!);
                   }
                 },
                 child: const Text('Take a photo')),

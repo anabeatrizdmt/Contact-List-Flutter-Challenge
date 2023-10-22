@@ -43,6 +43,7 @@ dependencies:
   path_provider: ^2.1.1
   image_picker: ^1.0.4
   gallery_saver: ^2.3.2
+  image_cropper: ^4.0.1
 
 dev_dependencies:
   flutter_test:
