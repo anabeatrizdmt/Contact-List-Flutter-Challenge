@@ -1,4 +1,5 @@
 import 'package:contact_list_app/model/contact_list_model.dart';
+import 'package:contact_list_app/model/contact_model.dart';
 import 'package:contact_list_app/pages/contact_page.dart';
 import 'package:contact_list_app/pages/create_contact_page.dart';
 import 'package:contact_list_app/repository/contact_back4app_repository.dart';
@@ -14,9 +15,10 @@ class ContactListPage extends StatefulWidget {
 
 class _ContactListPageState extends State<ContactListPage> {
   ContactBack4AppRepository contactBack4AppRepository =
-      ContactBack4AppRepository();
+  ContactBack4AppRepository();
   ContactListModel _contactList = ContactListModel([]);
   bool isLoading = false;
+  String searchQuery = ''; // Add a variable to store the search query
 
   @override
   void initState() {
@@ -29,11 +31,19 @@ class _ContactListPageState extends State<ContactListPage> {
       isLoading = true;
     });
     ContactListModel contactList =
-        await contactBack4AppRepository.getContactsFromBack4App();
+    await contactBack4AppRepository.getContactsFromBack4App();
     setState(() {
       _contactList = contactList;
       isLoading = false;
     });
+  }
+
+  // Create a function to filter the contact list by name
+  List<ContactModel> _filteredContacts() {
+    return _contactList.contacts
+        .where((contact) =>
+        contact.name.toLowerCase().contains(searchQuery.toLowerCase()))
+        .toList();
   }
 
   @override
@@ -61,28 +71,47 @@ class _ContactListPageState extends State<ContactListPage> {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 24),
         child: isLoading
             ? const Center(child: CircularProgressIndicator())
-            : Scrollbar(
+            : Column(
+          children: [
+            // Add a TextField for searching
+            TextField(
+              decoration: const InputDecoration(
+                labelText: 'Search by Name',
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  searchQuery = value;
+                });
+              },
+            ),
+            Expanded(
+              child: Scrollbar(
                 radius: const Radius.circular(10),
                 trackVisibility: true,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: ListView.builder(
-                    itemCount: _contactList.contacts.length,
+                    itemCount: _filteredContacts().length,
                     itemBuilder: (context, index) {
-                      _contactList.contacts
+                      _filteredContacts()
                           .sort((a, b) => a.name.compareTo(b.name));
-                      String contactName = _contactList.contacts[index].name;
+                      String contactName =
+                          _filteredContacts()[index].name;
                       String contactPhoneNumber =
-                          _contactList.contacts[index].phone ?? '';
+                          _filteredContacts()[index].phone ?? '';
                       String contactEmail =
-                          _contactList.contacts[index].email ?? '';
+                          _filteredContacts()[index].email ?? '';
                       return Card(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          padding:
+                          const EdgeInsets.symmetric(vertical: 8),
                           child: ListTile(
                             isThreeLine: contactEmail == '' ? false : true,
                             onTap: () async {
-                              await openContactPage(context, index);
+                              await openContactPage(
+                                  context, _filteredContacts()[index]);
+                              searchQuery = '';
                             },
                             leading: CircleAvatar(
                               child: Text(contactName[0]),
@@ -93,7 +122,9 @@ class _ContactListPageState extends State<ContactListPage> {
                                 : Text('$contactPhoneNumber\n$contactEmail'),
                             trailing: IconButton(
                                 onPressed: () async {
-                                  await openContactPage(context, index);
+                                  await openContactPage(
+                                      context, _filteredContacts()[index]);
+                                  searchQuery = '';
                                 },
                                 icon: const FaIcon(
                                   FontAwesomeIcons.userPen,
@@ -107,17 +138,20 @@ class _ContactListPageState extends State<ContactListPage> {
                   ),
                 ),
               ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Future<void> openContactPage(BuildContext context, int index) async {
+  Future<void> openContactPage(BuildContext context, ContactModel contact) async {
     await Navigator.push(
         context,
         MaterialPageRoute(
             builder: (context) => ContactPage(
-                  contact: _contactList.contacts[index],
-                )));
+              contact: contact,
+            )));
     setState(() {});
     _getContactList();
   }
