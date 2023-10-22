@@ -40,7 +40,7 @@ class _ContactListPageState extends State<ContactListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Contact list'),
+        title: const Text('My Contacts'),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
@@ -58,51 +58,67 @@ class _ContactListPageState extends State<ContactListPage> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 24),
         child: isLoading
             ? const Center(child: CircularProgressIndicator())
-            : ListView.builder(
-                itemCount: _contactList.contacts.length,
-                itemBuilder: (context, index) {
-                  _contactList.contacts
-                      .sort((a, b) => a.name.compareTo(b.name));
-                  String contactName = _contactList.contacts[index].name;
-                  String contactPhoneNumber =
-                      _contactList.contacts[index].phone ?? '';
-                  String contactEmail =
-                      _contactList.contacts[index].email ?? '';
-                  return Card(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          child: Text(contactName[0]),
-                        ),
-                        title: Text(contactName),
-                        subtitle: Text('$contactPhoneNumber\n$contactEmail'),
-                        trailing: IconButton(
-                            onPressed: () async {
-                              await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => ContactPage(
-                                            contact:
-                                                _contactList.contacts[index],
-                                          )));
-                              setState(() {});
-                              _getContactList();
+            : Scrollbar(
+                radius: const Radius.circular(10),
+                trackVisibility: true,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: ListView.builder(
+                    itemCount: _contactList.contacts.length,
+                    itemBuilder: (context, index) {
+                      _contactList.contacts
+                          .sort((a, b) => a.name.compareTo(b.name));
+                      String contactName = _contactList.contacts[index].name;
+                      String contactPhoneNumber =
+                          _contactList.contacts[index].phone ?? '';
+                      String contactEmail =
+                          _contactList.contacts[index].email ?? '';
+                      return Card(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: ListTile(
+                            isThreeLine: contactEmail == '' ? false : true,
+                            onTap: () async {
+                              await openContactPage(context, index);
                             },
-                            icon: const FaIcon(
-                              FontAwesomeIcons.userPen,
-                              size: 18,
-                              color: Colors.grey,
-                            )),
-                      ),
-                    ),
-                  );
-                },
+                            leading: CircleAvatar(
+                              child: Text(contactName[0]),
+                            ),
+                            title: Text(contactName),
+                            subtitle: contactEmail == ''
+                                ? Text(contactPhoneNumber)
+                                : Text('$contactPhoneNumber\n$contactEmail'),
+                            trailing: IconButton(
+                                onPressed: () async {
+                                  await openContactPage(context, index);
+                                },
+                                icon: const FaIcon(
+                                  FontAwesomeIcons.userPen,
+                                  size: 18,
+                                  color: Colors.grey,
+                                )),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
       ),
     );
+  }
+
+  Future<void> openContactPage(BuildContext context, int index) async {
+    await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => ContactPage(
+                  contact: _contactList.contacts[index],
+                )));
+    setState(() {});
+    _getContactList();
   }
 }
