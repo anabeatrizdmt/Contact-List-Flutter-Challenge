@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:contact_list_app/model/contact_list_model.dart';
 import 'package:contact_list_app/model/contact_model.dart';
 import 'package:contact_list_app/pages/contact_page.dart';
@@ -15,10 +17,10 @@ class ContactListPage extends StatefulWidget {
 
 class _ContactListPageState extends State<ContactListPage> {
   ContactBack4AppRepository contactBack4AppRepository =
-  ContactBack4AppRepository();
+      ContactBack4AppRepository();
   ContactListModel _contactList = ContactListModel([]);
   bool isLoading = false;
-  String searchQuery = ''; // Add a variable to store the search query
+  String searchQuery = '';
 
   @override
   void initState() {
@@ -31,18 +33,17 @@ class _ContactListPageState extends State<ContactListPage> {
       isLoading = true;
     });
     ContactListModel contactList =
-    await contactBack4AppRepository.getContactsFromBack4App();
+        await contactBack4AppRepository.getContactsFromBack4App();
     setState(() {
       _contactList = contactList;
       isLoading = false;
     });
   }
 
-  // Create a function to filter the contact list by name
   List<ContactModel> _filteredContacts() {
     return _contactList.contacts
         .where((contact) =>
-        contact.name.toLowerCase().contains(searchQuery.toLowerCase()))
+            contact.name.toLowerCase().contains(searchQuery.toLowerCase()))
         .toList();
   }
 
@@ -72,86 +73,113 @@ class _ContactListPageState extends State<ContactListPage> {
         child: isLoading
             ? const Center(child: CircularProgressIndicator())
             : Column(
-          children: [
-            // Add a TextField for searching
-            TextField(
-              decoration: const InputDecoration(
-                labelText: 'Search by Name',
-                prefixIcon: Icon(Icons.search),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  searchQuery = value;
-                });
-              },
-            ),
-            Expanded(
-              child: Scrollbar(
-                radius: const Radius.circular(10),
-                trackVisibility: true,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: ListView.builder(
-                    itemCount: _filteredContacts().length,
-                    itemBuilder: (context, index) {
-                      _filteredContacts()
-                          .sort((a, b) => a.name.compareTo(b.name));
-                      String contactName =
-                          _filteredContacts()[index].name;
-                      String contactPhoneNumber =
-                          _filteredContacts()[index].phone ?? '';
-                      String contactEmail =
-                          _filteredContacts()[index].email ?? '';
-                      return Card(
-                        child: Padding(
-                          padding:
-                          const EdgeInsets.symmetric(vertical: 8),
-                          child: ListTile(
-                            isThreeLine: contactEmail == '' ? false : true,
-                            onTap: () async {
-                              await openContactPage(
-                                  context, _filteredContacts()[index]);
-                              searchQuery = '';
-                            },
-                            leading: CircleAvatar(
-                              child: Text(contactName[0]),
-                            ),
-                            title: Text(contactName),
-                            subtitle: contactEmail == ''
-                                ? Text(contactPhoneNumber)
-                                : Text('$contactPhoneNumber\n$contactEmail'),
-                            trailing: IconButton(
-                                onPressed: () async {
-                                  await openContactPage(
-                                      context, _filteredContacts()[index]);
-                                  searchQuery = '';
-                                },
-                                icon: const FaIcon(
-                                  FontAwesomeIcons.userPen,
-                                  size: 18,
-                                  color: Colors.grey,
-                                )),
-                          ),
-                        ),
-                      );
+                children: [
+                  TextField(
+                    decoration: const InputDecoration(
+                      labelText: 'Search by Name',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        searchQuery = value;
+                      });
                     },
                   ),
-                ),
+                  const SizedBox(
+                    height: 8,
+                  ),
+                  Expanded(
+                    child: Scrollbar(
+                      radius: const Radius.circular(10),
+                      trackVisibility: true,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: ListView.builder(
+                          itemCount: _filteredContacts().length,
+                          itemBuilder: (context, index) {
+                            _filteredContacts()
+                                .sort((a, b) => a.name.compareTo(b.name));
+                            String contactName =
+                                _filteredContacts()[index].name;
+                            String contactPhoneNumber =
+                                _filteredContacts()[index].phone;
+                            String contactEmail =
+                                _filteredContacts()[index].email ?? '';
+                            String contactProfilePicturePath =
+                                _filteredContacts()[index].profilePicturePath ??
+                                    '';
+                            return Card(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8),
+                                child: ListTile(
+                                  isThreeLine:
+                                      contactEmail == '' ? false : true,
+                                  onTap: () async {
+                                    await openContactPage(
+                                        context, _filteredContacts()[index]);
+                                    searchQuery = '';
+                                  },
+                                  leading: CircleAvatar(
+                                    child: ClipOval(
+                                      child: SizedBox(
+                                        width: 60,
+                                        height: 60,
+                                        child: contactProfilePicturePath
+                                                    .length >
+                                                10
+                                            ? Image.file(
+                                                File(contactProfilePicturePath),
+                                                fit: BoxFit.cover,
+                                              )
+                                            : const Center(
+                                                child: FaIcon(
+                                                  FontAwesomeIcons.user,
+                                                  size: 20,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                      ),
+                                    ),
+                                  ),
+                                  title: Text(contactName),
+                                  subtitle: contactEmail == ''
+                                      ? Text(contactPhoneNumber)
+                                      : Text(
+                                          '$contactPhoneNumber\n$contactEmail'),
+                                  trailing: IconButton(
+                                      onPressed: () async {
+                                        await openContactPage(context,
+                                            _filteredContacts()[index]);
+                                        searchQuery = '';
+                                      },
+                                      icon: const FaIcon(
+                                        FontAwesomeIcons.userPen,
+                                        size: 18,
+                                        color: Colors.grey,
+                                      )),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
 
-  Future<void> openContactPage(BuildContext context, ContactModel contact) async {
+  Future<void> openContactPage(
+      BuildContext context, ContactModel contact) async {
     await Navigator.push(
         context,
         MaterialPageRoute(
             builder: (context) => ContactPage(
-              contact: contact,
-            )));
+                  contact: contact,
+                )));
     setState(() {});
     _getContactList();
   }

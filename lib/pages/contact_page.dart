@@ -1,6 +1,13 @@
+import 'dart:io';
+
 import 'package:contact_list_app/model/contact_model.dart';
 import 'package:contact_list_app/repository/contact_back4app_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:gallery_saver/gallery_saver.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart' as path_provider;
+import 'package:path/path.dart';
 
 class ContactPage extends StatefulWidget {
   final ContactModel contact;
@@ -19,12 +26,16 @@ class _ContactPageState extends State<ContactPage> {
   TextEditingController phoneController = TextEditingController();
   TextEditingController emailController = TextEditingController();
 
+  XFile? photo;
+  String photoPath = '';
+
   @override
   void initState() {
     super.initState();
     nameController.text = widget.contact.name;
     phoneController.text = widget.contact.phone;
     emailController.text = widget.contact.email ?? '';
+    photoPath = widget.contact.profilePicturePath;
   }
 
   @override
@@ -45,17 +56,61 @@ class _ContactPageState extends State<ContactPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            SizedBox(
+              width: 160,
+              height: 160,
+              child: CircleAvatar(
+                radius: 80,
+                child: ClipOval(
+                  child: SizedBox(
+                    width: 160,
+                    height: 160,
+                    child: photoPath.length > 10
+                        ? Image.file(
+                            File(photoPath),
+                            fit: BoxFit.cover,
+                          )
+                        : const Center(
+                            child: FaIcon(
+                              FontAwesomeIcons.user,
+                              size: 20,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ),
+            TextButton(
+                onPressed: () async {
+                  final ImagePicker picker = ImagePicker();
+                  photo = await picker.pickImage(source: ImageSource.camera);
+                  if (photo != null) {
+                    String path =
+                        (await path_provider.getApplicationDocumentsDirectory())
+                            .path;
+                    String name = basename(photo!.path);
+                    await photo!.saveTo("$path/$name");
+                    photoPath = photo!.path;
+                    await GallerySaver.saveImage(photo!.path);
+                    setState(() {});
+                  }
+                },
+                child: const Text('Take a photo')),
             TextField(
               controller: nameController,
               decoration: const InputDecoration(labelText: 'Name*'),
+              keyboardType: TextInputType.name,
             ),
             TextField(
               controller: phoneController,
               decoration: const InputDecoration(labelText: 'Phone*'),
+              keyboardType: TextInputType.phone,
             ),
             TextField(
               controller: emailController,
               decoration: const InputDecoration(labelText: 'Email'),
+              keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 20),
             ElevatedButton(
@@ -74,7 +129,7 @@ class _ContactPageState extends State<ContactPage> {
                     name: name,
                     phone: phone,
                     email: email,
-                    profilePicturePath: widget.contact.profilePicturePath,
+                    profilePicturePath: photoPath,
                     createdAt: widget.contact.createdAt,
                     updatedAt: DateTime.now().toString(),
                   );
@@ -101,8 +156,8 @@ class _ContactPageState extends State<ContactPage> {
                   builder: (BuildContext context) {
                     return AlertDialog(
                       title: const Text('Delete Contact'),
-                      content:
-                          const Text('Are you sure you want to delete this contact?'),
+                      content: const Text(
+                          'Are you sure you want to delete this contact?'),
                       actions: [
                         TextButton(
                           child: const Text('Cancel'),
