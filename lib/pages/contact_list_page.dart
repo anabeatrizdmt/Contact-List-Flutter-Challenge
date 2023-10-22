@@ -3,6 +3,7 @@ import 'package:contact_list_app/pages/contact_page.dart';
 import 'package:contact_list_app/pages/create_contact_page.dart';
 import 'package:contact_list_app/repository/contact_back4app_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ContactListPage extends StatefulWidget {
   const ContactListPage({Key? key}) : super(key: key);
@@ -50,7 +51,11 @@ class _ContactListPageState extends State<ContactListPage> {
           setState(() {});
           _getContactList();
         },
-        child: const Icon(Icons.add),
+        child: const FaIcon(
+          FontAwesomeIcons.userPlus,
+          size: 20,
+          color: Colors.white,
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -67,24 +72,31 @@ class _ContactListPageState extends State<ContactListPage> {
                   String contactEmail =
                       _contactList.contacts[index].email ?? '';
                   return Card(
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        child: Text(contactName[0]),
-                      ),
-                      title: Text(contactName),
-                      subtitle: Text('$contactPhoneNumber\n$contactEmail'),
-                      trailing: IconButton(
-                        onPressed: () async {
-                          await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => ContactPage(
-                                        contact: _contactList.contacts[index],
-                                      )));
-                          setState(() {});
-                          _getContactList();
-                        },
-                        icon: const Icon(Icons.edit),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          child: Text(contactName[0]),
+                        ),
+                        title: Text(contactName),
+                        subtitle: Text('$contactPhoneNumber\n$contactEmail'),
+                        trailing: IconButton(
+                            onPressed: () async {
+                              await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => ContactPage(
+                                            contact:
+                                                _contactList.contacts[index],
+                                          )));
+                              setState(() {});
+                              _getContactList();
+                            },
+                            icon: const FaIcon(
+                              FontAwesomeIcons.userPen,
+                              size: 18,
+                              color: Colors.grey,
+                            )),
                       ),
                     ),
                   );
